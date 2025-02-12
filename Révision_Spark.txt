@@ -1,0 +1,103 @@
+Révision Spark :
+
+I. Méthode d'installation :
+
+1- Installer Anaconda et java en local
+
+2- Exécution: sur le terminale de anaconda
+installer java --> conda install openjdk
+créer un environnement dédié --> conda create -n pyspark_env python=3 / Sachant que pyspark_env c'est le nom de l'environnement donc on peut le changer
+activer l'environnement --> conda activate pyspark_env
+installer pyspark --> pip install pyspark
+installer findspark --> conda install -c conda-forge findspark
+
+3- Une fois toutes ses étapes réalisée, on va sur le notebook
+--> import findspark
+--> findspark.init() 
+--> findspark.find()
+
+II. Manipulation de pyspark : 
+
+1- ouvrir une session spark : 
+--> from pyspark.sql import SparkSession
+--> spark = SparkSession.builder.appName("nom_session").getOrCreate()
+--> spark (pour acceder à Spark UI)
+
+3. Importer les données
+--json--> df = spark.read.json("nom_fichier.json")
+--csv--> df = spark.read.csv("nom_fichier.csv", header=True)
+
+4. Exploration des données :
+--aficher--> df.show()
+--afficher Schema-- df.printSchema()
+--colonnes--> df.columns
+--description (stat des)--> df.describe().show()
+--selectionner une colonne--> df.select("nom_colonne").show()
+--selectionner ligne--> df.head(nombre_ligne) / output est une liste
+--selectionner ligne parmi liste--> df.head()[]
+--selectionner plusieurs colonne--> df.select("colonne1","colonne2").show()
+--Renommer une colonne 1 par colonne 2--> df.withColumnRenamed("colonn1", "colonne2").show()
+
+
+
+5. Data Engineering : 
+--StructField--> Représente une colonne d’un DataFrame avec son nom, type et éventuellement une contrainte de nullabilité.
+--StringType--> type de donnée "string".
+--IntegerType--> type de donnée "int".
+--StructType--> Définit un schéma composé de plusieurs StructField.
+
+--Application--
+--> from pyspark.sql.types import StructField, StringType, IntegerType, StructType
+--> sch = [StructField('age', IntegerType(), True),
+           StructField('name', StringType(), True)]
+--> struct = StructType(fields=sch)
+--la façon d'importer une df selon une structure de donnée précises--> df = spark.read.json("nom_fichier.json", schema=struct)
+--> df.printSchema()
+
+--Pour faire la même chose mais automatiquement, on a juste a préciser que inferSchema=True comme suit--
+--> df = spark.read.option(inferSchema, True).json("nom_fichier.json")
+
+6. Faire des opérations sur la df : 
+--calculer une var à partir d'autres--> df.withColumn("triple_age", df["age"]*3).show()
+--Effectuer un filtre sur une colonne--> df.filter("condition").show()
+--Effectuer un filtre et récupérer des colonnes précises--> df.filter("condition").select("colonne", "colonne1").show()
+--Effectuer plusieur filtres--> df.filter((df['colonne']>100)&(df['colonne1)<300)).show()
+--Effectuer un filtre sur une colonne et l'affecter--> result = df.filter(df['low'] == 197.16).show()
+
+## Récupérer les données sous format RDD (sous format d'une liste: clé et valeur) : [Row(Date='2010-01-22', Open='206.78000600000001', High='207.499996', Low='197.16', Close='197.75', Volume='220441900', Adj Close='25.620401')]
+result = df.filter(df['low'] == 197.16).collect()
+row = result
+## Récupérer un élément de la row
+row.asDict()['Low']
+## Récupérer le type d'un élément de la row
+type(row.asDict()['High'])
+
+7. Spark SQL : 
+
+--Pour pouvoir utiliser sql sur une df, faut commencer par créer une vue temporaire--> df.createOrReplaceTempView("people_view")
+--Selectionner des données en utilisant sql--> spark.sql('SELECT * FROM people_view WHERE name="justin"').show()
+
+--on peut mettre la requette sql dans une var--> ma_req = 'SELECT * FROM people_view WHERE age>15'
+
+--Et l'appelée directement--> spark.sql(ma_req).show()
+
+
+
+
+
+
+sales_df.agg({'sales':'sum'}).show()
+
+
+
+###########################
+table de fait et table dimention, raisonnement de modélisation en étoile
+faut répondre à ces questions 
+qui fait quoi ?
+qui, quand, quoi, ou, comment ?
+
+
+
+
+####################
+Lazy évaluation spark
